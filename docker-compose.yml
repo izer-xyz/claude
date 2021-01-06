@@ -1,0 +1,68 @@
+version: '2'
+
+services:
+
+  configz:
+    build: .
+    restart: always
+    environment:
+      - VAULT_ADDR=https://secretz.b.w1n.net
+    volumes:
+      - logz:/logZ
+      - proxz:/proxZ
+
+  proxz:
+    image: traefik:2.3
+    depends_on:
+      - configz
+    restart: always
+    ports:
+      - 80:80 
+      - 443:443
+    environment:
+      - CF_DNS_API_TOKEN_FILE=/etc/traefik/CF_DNS_API_TOKEN
+    volumes:
+      - proxz:/etc/traefik:ro
+      - certz:/etc/certz
+    labels:
+      io.balena.features.balena-socket: '1'
+      traefik.enable: true
+      traefik.http.routers.api.service: 'api@internal'
+
+  logz:
+    image: fluent/fluent-bit:1.6
+    depends_on:
+      - configz
+    restart: always 
+    entrypoint: ["/logz/entry.sh"]
+    volumes:
+      - logz:/logz:ro
+    labels:
+      io.balena.features.supervisor-api: '1'
+
+  homebridge:
+    image: oznu/homebridge:3.3
+    restart: always
+    network_mode: host
+    environment:
+      - TZ=Australia/Sydney
+      - PACKAGES=python3-dev,py3-pip
+      - PGID=8888
+      - PUID=8888
+      - HOMEBRIDGE_CONFIG_UI=1
+      - HOMEBRIDGE_CONFIG_UI_PORT=8888
+    volumes:
+      - homebridge:/homebridge
+
+volumes:
+  certz:
+  proxz:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  logz:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  homebridge:
+

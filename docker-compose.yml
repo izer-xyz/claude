@@ -6,7 +6,7 @@ services:
     build: .
     restart: always
     environment:
-      - VAULT_ADDR=https://secretz.b.w1n.net
+      - VAULT_ADDR=https://secretz
     volumes:
       - logz:/logZ
       - proxz:/proxZ

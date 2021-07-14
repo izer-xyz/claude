@@ -8,7 +8,6 @@ RUN	curl -sS https://releases.hashicorp.com/vault/1.7.3/vault_1.7.3_linux_amd64.
 	&& rm /tmp/vault.zip
 
 COPY	configZ /configZ/
-COPY	logZ /configZ/logZ/
 COPY	proxZ /configZ/proxZ/	
 COPY	secretZ /configZ/secretZ/
 COPY	backupZ /configZ/backupZ/

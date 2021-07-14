@@ -35,10 +35,6 @@ vault write auth/approle/role/$ROLE/role-id role_id=$ROLEID
 
 echo find and create secrets
 
-vault kv put env/$ROLE/logz \
-	ELASTIC_HOST="$ELASTIC_HOST" \
-	ELASTIC_INDEX="$ELASTIC_INDEX"
-
 vault kv put env/$ROLE/proxz \
 	DOMAIN="$DOMAIN" \
 	DOMAIN_EMAIL="$DOMAIN_EMAIL" \

@@ -9,11 +9,6 @@ auto_auth {
 }
 
 template {
-	source		= "/configZ/logZ/fluent-bit.conf.tpl"
-	destination	= "/logZ/fluent-bit.conf"
-}
-
-template {
 	source		= "/configZ/proxZ/traefik.yml.tpl"
 	destination	= "/proxZ/traefik.yml"
 }

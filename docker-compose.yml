@@ -4,18 +4,36 @@ services:
 
   configz:
     build: .
-    restart: always
+    restart: unless-stopped
     environment:
-      - VAULT_ADDR=https://secretz
+      - VAULT_ADDR=http://secretz:8200
     volumes:
       - logz:/logZ
       - proxz:/proxZ
+      - secretz:/secretZ
+
+  secretz:
+    image: vault:1.7.3
+    depends_on:
+      - configz
+    restart: unless-stopped
+    command: ["server"]
+    environment:
+      - VAULT_ADDR=http://secretz:8200
+      - VAULT_API_ADDR=http://secretz:8200
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - vault:/vault/file
+      - secretz:/vault/config
+    labels:
+      traefik.enable: true
 
   proxz:
     image: traefik:2.3
     depends_on:
-      - configz
-    restart: always
+      - secretz
+    restart: unless-stopped
     ports:
       - 80:80 
       - 443:443
@@ -30,32 +48,67 @@ services:
       traefik.http.routers.api.service: 'api@internal'
 
   logz:
-    image: fluent/fluent-bit:1.6
+    image: fluent/fluent-bit:1.6.1
     depends_on:
-      - configz
-    restart: always 
-    entrypoint: ["/logz/entry.sh"]
+      - secretz
+    restart: unless-stopped 
+    entrypoint: ["sh", "-c", "/logz/entry.sh"]
     volumes:
       - logz:/logz:ro
     labels:
       io.balena.features.supervisor-api: '1'
 
-  homebridge:
-    image: oznu/homebridge:3.3
-    restart: always
-    network_mode: host
-    environment:
-      - TZ=Australia/Sydney
-      - PACKAGES=python3-dev,py3-pip
-      - PGID=8888
-      - PUID=8888
-      - HOMEBRIDGE_CONFIG_UI=1
-      - HOMEBRIDGE_CONFIG_UI_PORT=8888
+  search:
+    image: benbusby/whoogle-search
+    container_name: whoogle-search
+    restart: unless-stopped
+    command: ["python3", "-um", "app", "--host", "0.0.0.0", "--port", "5000"]
+    # user debian-tor from tor package
+    user: '102'
     volumes:
-      - homebridge:/homebridge
+      - search:/config
+    #environment: # Uncomment to configure environment variables
+      # Basic auth configuration, uncomment to enable
+      #- WHOOGLE_USER=<auth username>
+      #- WHOOGLE_PASS=<auth password>
+      # Proxy configuration, uncomment to enable
+      #- WHOOGLE_PROXY_USER=<proxy username>
+      #- WHOOGLE_PROXY_PASS=<proxy password>
+      #- WHOOGLE_PROXY_TYPE=<proxy type (http|socks4|socks5)
+      #- WHOOGLE_PROXY_LOC=<proxy host/ip>
+      # Site alternative configurations, uncomment to enable
+      # Note: If not set, the feature will still be available
+      # with default values. 
+      #- WHOOGLE_ALT_TW=nitter.net
+      #- WHOOGLE_ALT_YT=invidious.snopyta.org
+      #- WHOOGLE_ALT_IG=bibliogram.art/u
+      #- WHOOGLE_ALT_RD=libredd.it
+      # Load environment variables from whoogle.env
+      #- WHOOGLE_DOTENV=1
+    ports:
+      - 5000:5000
+    labels:
+      traefik.enable: true
+      traefik.http.services.search.loadbalancer.server.port: 5000
+
+  tiddlywiki:
+    image: m0wer/tiddlywiki:v5.1.23
+    restart: unless-stopped
+    environment:
+      #- NODE_MEM=128
+      - USERNAME=
+      - PASSWORD=
+      - SERVE_URI=i-know-it
+    volumes:
+      - wiki:/var/lib/tiddlywiki
+    labels:
+      traefik.enable: true
+      traefik.http.services.search.loadbalancer.server.port: 8080
 
 volumes:
   certz:
+  vault:
+  secretz:
   proxz:
     driver_opts:
       type: tmpfs
@@ -64,5 +117,8 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-  homebridge:
-
+  search:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  wiki:

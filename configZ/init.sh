@@ -4,6 +4,21 @@ cd /configZ
 
 export VAULT_FORMAT=json
 
+if [ ! $VAULT_TOKEN ]; then
+  MY_VAULT_INIT=$(vault operator init -recovery-shares=1 -recovery-threshold=1)
+    
+  echo $MY_VAULT_INIT
+     
+  export VAULT_TOKEN=$( jq -r ".root_token" <<< $MY_VAULT_INIT )
+  MY_VAULT_UNSEAL_KEY=$( jq -r ".unseal_keys_b64[]" <<< $MY_VAULT_INIT )
+  
+  vault auth enable approle
+  vault secrets enable -path=env kv-v2
+
+  echo wait little...
+  sleep 10
+fi
+
 ROLEID=$BALENA_DEVICE_UUID
 ROLE=$BALENA_APP_NAME
 
@@ -29,5 +44,6 @@ vault kv put env/$ROLE/proxz \
 	DOMAIN_EMAIL="$DOMAIN_EMAIL" \
 	CF_DNS_API_TOKEN="$CF_DNS_API_TOKEN"
 
+echo $MY_VAULT_INIT
 echo Init done time to reboot...
 # reboot

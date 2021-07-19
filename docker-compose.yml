@@ -9,6 +9,7 @@ services:
       - VAULT_ADDR=http://secretz:8200
       - ROLE=$COMPOSE_PROJECT_NAME
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - proxz:/proxZ
       - secretz:/secretZ
       - backupz:/backupZ
@@ -25,7 +26,7 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - vault:/vault/file
+      - /etc/localtime:/etc/localtime:ro
       - secretz:/vault/config
     labels:
       traefik.enable: true
@@ -41,6 +42,7 @@ services:
     environment:
       - CF_DNS_API_TOKEN_FILE=/etc/traefik/CF_DNS_API_TOKEN
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - proxz:/etc/traefik:ro
       - certz:/etc/certz
       - /var/run/docker.sock:/var/run/docker.sock
@@ -65,7 +67,6 @@ services:
 
 volumes:
   certz:
-  vault:
   secretz:
   proxz:
     driver_opts:

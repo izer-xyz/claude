@@ -18,20 +18,20 @@ entryPoints:
       tls:
         certresolver: cloudflare
         domains:
-          - main:   "{{ with printf "env/%s/proxz" (env "BALENA_APP_NAME") | secret }}{{ .Data.data.DOMAIN }}{{ end }}"
-            sans: "*.{{ with printf "env/%s/proxz" (env "BALENA_APP_NAME") | secret }}{{ .Data.data.DOMAIN }}{{ end }}"
+          - main:   "{{ with printf "env/%s/proxz" (env "ROLE") | secret }}{{ .Data.data.DOMAIN }}{{ end }}"
+            sans: "*.{{ with printf "env/%s/proxz" (env "ROLE") | secret }}{{ .Data.data.DOMAIN }}{{ end }}"
 
 providers:
   docker:
-    endpoint: "unix:///var/run/balena.sock"
+    endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     watch: true
-    defaultRule: "Host(`{{ `{{ index .Labels \"io.balena.service-name\" }}` }}.{{ with printf "env/%s/proxz" (env "BALENA_APP_NAME") | secret }}{{ .Data.data.DOMAIN }}{{ end }}`)"
+    defaultRule: "Host(`{{ `{{ index .Labels \"com.docker.compose.service\" }}` }}.{{ with printf "env/%s/proxz" (env "ROLE") | secret }}{{ .Data.data.DOMAIN }}{{ end }}`)"
 
 certificatesResolvers:
   cloudflare:
     acme:
-      email: {{ with printf "env/%s/proxz" (env "BALENA_APP_NAME") | secret }}{{ .Data.data.DOMAIN_EMAIL }}{{ end }}
+      email: {{ with printf "env/%s/proxz" (env "ROLE") | secret }}{{ .Data.data.DOMAIN_EMAIL }}{{ end }}
       storage: /etc/certz/acme.json
       dnsChallenge:
         provider: cloudflare

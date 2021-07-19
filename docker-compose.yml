@@ -7,9 +7,11 @@ services:
     restart: unless-stopped
     environment:
       - VAULT_ADDR=http://secretz:8200
+      - ROLE=$COMPOSE_PROJECT_NAME
     volumes:
       - proxz:/proxZ
       - secretz:/secretZ
+      - backupz:/backupZ
 
   secretz:
     image: vault:1.7.3
@@ -41,56 +43,25 @@ services:
     volumes:
       - proxz:/etc/traefik:ro
       - certz:/etc/certz
+      - /var/run/docker.sock:/var/run/docker.sock
     labels:
-      io.balena.features.balena-socket: '1'
       traefik.enable: true
       traefik.http.routers.api.service: 'api@internal'
 
-  search:
-    image: benbusby/whoogle-search
+  portainer:
+    image: portainer/portainer-ce:2.6.1
+    container_name: portainer
     restart: unless-stopped
-    command: ["python3", "-um", "app", "--host", "0.0.0.0", "--port", "5000"]
-    # user debian-tor from tor package
-    user: '102'
     volumes:
-      - search:/config
-    #environment: # Uncomment to configure environment variables
-      # Basic auth configuration, uncomment to enable
-      #- WHOOGLE_USER=<auth username>
-      #- WHOOGLE_PASS=<auth password>
-      # Proxy configuration, uncomment to enable
-      #- WHOOGLE_PROXY_USER=<proxy username>
-      #- WHOOGLE_PROXY_PASS=<proxy password>
-      #- WHOOGLE_PROXY_TYPE=<proxy type (http|socks4|socks5)
-      #- WHOOGLE_PROXY_LOC=<proxy host/ip>
-      # Site alternative configurations, uncomment to enable
-      # Note: If not set, the feature will still be available
-      # with default values. 
-      #- WHOOGLE_ALT_TW=nitter.net
-      #- WHOOGLE_ALT_YT=invidious.snopyta.org
-      #- WHOOGLE_ALT_IG=bibliogram.art/u
-      #- WHOOGLE_ALT_RD=libredd.it
-      # Load environment variables from whoogle.env
-      #- WHOOGLE_DOTENV=1
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - portainer:/data
     ports:
-      - 5000:5000
+      - 9000:9000
+      - 8000:8000
     labels:
       traefik.enable: true
-      traefik.http.services.search.loadbalancer.server.port: 5000
-
-  tiddlywiki:
-    image: m0wer/tiddlywiki:v5.1.23
-    restart: unless-stopped
-    environment:
-      #- NODE_MEM=128
-      - USERNAME=
-      - PASSWORD=
-      - SERVE_URI=i-know-it
-    volumes:
-      - wiki:/var/lib/tiddlywiki
-    labels:
-      traefik.enable: true
-      traefik.http.services.search.loadbalancer.server.port: 8080
+      traefik.http.services.portainer.loadbalancer.server.port: 9000
 
 volumes:
   certz:
@@ -100,8 +71,8 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-  search:
+  backupz:
     driver_opts:
       type: tmpfs
       device: tmpfs
-  wiki:
+  portainer:

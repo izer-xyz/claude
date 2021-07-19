@@ -1,4 +1,4 @@
-FROM balenalib/generic-debian-python:3.8
+FROM ghcr.io/izer-xyz/oci-cli:2.26.2-amd64
 
 USER	root
 

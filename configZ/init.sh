@@ -19,8 +19,9 @@ if [ ! $VAULT_TOKEN ]; then
   sleep 10
 fi
 
-ROLEID=$BALENA_DEVICE_UUID
-ROLE=$BALENA_APP_NAME
+ROLEID=$(curl -H "Authorization: Bearer Oracle" -L http://169.254.169.254/opc/v2/instance/id)
+#ROLE=$BALENA_APP_NAME
+ROLE=$ROLE
 
 echo create role: $ROLE
 vault policy write $ROLE - <<EOF
@@ -29,7 +30,8 @@ path "env/data/$ROLE/*" {
 }
 EOF
 
-CIDR=$(ip -o -f inet addr show | awk '/scope global/ {print $4}')
+#CIDR=$(ip -o -f inet addr show | awk '/scope global/ {print $4}')
+CIDR=0.0.0.0/0
 vault write auth/approle/role/$ROLE bound_cidr_list=$CIDR bind_secret_id=false policies=$ROLE
 vault write auth/approle/role/$ROLE/role-id role_id=$ROLEID
 
